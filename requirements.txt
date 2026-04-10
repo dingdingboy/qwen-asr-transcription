@@ -1,0 +1,22 @@
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+websockets==12.0
+numpy==1.26.3
+librosa==0.10.1
+python-multipart==0.0.6
+pydantic==2.5.3
+pydantic-settings==2.1.0
+webrtcvad==2.0.10
+
+# OpenVINO support
+openvino>=2024.0.0
+
+# Qwen3-ASR dependencies (required for OpenVINO inference)
+# Note: qwen-asr package should be installed from get_convert_qwenasr/Qwen3-ASR/
+torch>=2.0.0
+transformers>=4.40.0
+accelerate>=0.27.0
+
+# Legacy dependencies (optional, for non-OpenVINO backends)
+# llama-cpp-python==0.2.38
+# bitsandbytes>=0.43.0
