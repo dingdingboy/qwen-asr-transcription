@@ -11,7 +11,7 @@ from contextlib import asynccontextmanager
 from typing import Dict, Optional
 
 import numpy as np
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.websockets import WebSocketState
 
@@ -327,6 +327,66 @@ async def transcribe_websocket(websocket: WebSocket):
         except:
             pass
         print(f"Session {session_id} closed")
+
+@app.post("/api/transcribe/file")
+async def transcribe_file(
+    file: UploadFile = File(...),
+    language: Optional[str] = Form(None)
+):
+    """Transcribe an audio file."""
+    if not asr_engine:
+        return {"error": "Model not loaded"}
+
+    try:
+        # Save the uploaded file temporarily
+        temp_path = f"/tmp/{uuid.uuid4()}_{file.filename}"
+        with open(temp_path, "wb") as buffer:
+            buffer.write(await file.read())
+
+        # Transcribe the file
+        text = asr_engine.transcribe_file(temp_path, language)
+
+        # Clean up
+        os.remove(temp_path)
+
+        return {
+            "text": text,
+            "language": language or "auto-detected"
+        }
+
+    except Exception as e:
+        print(f"File transcription error: {e}")
+        return {"error": str(e)}
+
+@app.post("/api/transcribe/audio")
+async def transcribe_audio(
+    audio: bytes = File(...),
+    sample_rate: int = Form(16000),
+    language: Optional[str] = Form(None)
+):
+    """Transcribe raw audio data."""
+    if not asr_engine:
+        return {"error": "Model not loaded"}
+
+    try:
+        # Convert bytes to numpy array
+        audio_array = np.frombuffer(audio, dtype=np.int16)
+        audio_float = audio_array.astype(np.float32) / 32768.0
+
+        # Transcribe using the existing ASR engine
+        # Note: This is a simplified version - in production, you might want to
+        # process the audio in chunks or use a different method
+        results = list(asr_engine.transcribe_chunk(audio_float, stream=False, language=language))
+        text = results[0] if results else ""
+
+        return {
+            "text": text,
+            "language": language or "auto-detected"
+        }
+
+    except Exception as e:
+        print(f"Audio transcription error: {e}")
+        return {"error": str(e)}
 
 
 if __name__ == "__main__":

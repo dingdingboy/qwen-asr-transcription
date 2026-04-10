@@ -80,3 +80,4 @@ Thumbs.db
 .coverage
 htmlcov/
 .pytest_cache/
+get_convert_qwenasr/Qwen3-ASR
